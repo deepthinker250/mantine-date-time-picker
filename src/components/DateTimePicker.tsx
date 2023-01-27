@@ -74,7 +74,7 @@ export interface DateTimePickerProps
 const defaultProps: Partial<DateTimePickerProps> = {
   shadow: "sm",
   transitionDuration: 200,
-  closeCalendarOnChange: true,
+  closeCalendarOnChange: false,
   labelFormat: "MMMM YYYY",
   initiallyOpened: false,
   name: "date",
@@ -301,6 +301,7 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
       const hour = dayjs(time).hour();
       const minute = dayjs(time).minute();
       const dateAndTime = dayjs(date).hour(hour).minute(minute);
+      //@ts-ignore
       return dateAndTime.$d;
     };
 
