@@ -66,12 +66,15 @@ export interface DateTimePickerProps
 
   /** Render day based on the date */
   renderDay?(date: Date): React.ReactNode;
+
+  /** Hide now button so that it doesn't interfear with min or max date */
+  hideNow?: boolean;
 }
 
 const defaultProps: Partial<DateTimePickerProps> = {
   shadow: "sm",
   transitionDuration: 200,
-  closeCalendarOnChange: true,
+  closeCalendarOnChange: false,
   labelFormat: "MMMM YYYY",
   initiallyOpened: false,
   name: "date",
@@ -142,6 +145,7 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
       nextYearLabel,
       previousDecadeLabel,
       previousYearLabel,
+      hideNow,
       ...others
     } = useComponentDefaultProps("DatePicker", defaultProps, props);
 
@@ -291,6 +295,16 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
       onChange?.(_value);
     };
 
+    const combineTimeAndDate = (time: Date, date: Date): Date => {
+      if (!(time instanceof Date)) return date;
+
+      const hour = dayjs(time).hour();
+      const minute = dayjs(time).minute();
+      const dateAndTime = dayjs(date).hour(hour).minute(minute);
+      //@ts-ignore
+      return dateAndTime.$d;
+    };
+
     return (
       <DatePickerBase
         allowFreeInput={allowFreeInput}
@@ -365,15 +379,19 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
         />
 
         <Group align="center" spacing="xs">
-          <Button sx={{ flexGrow: 1 }} variant="light" onClick={handleNow}>
-            Now
-          </Button>
+          {!hideNow && (
+            <Button sx={{ flexGrow: 1 }} variant="light" onClick={handleNow}>
+              Now
+            </Button>
+          )}
           <TimeInput
             icon={<IconClock size={18} />}
-            sx={{ flexGrow: 2 }}
+            sx={{ flexGrow: 1 }}
             disabled={!_value}
             value={_value}
-            onChange={setValue}
+            onChange={(value) => {
+              setValue(combineTimeAndDate(value, _value!));
+            }}
             format={dateFormat.match(/ a$/i) ? "12" : "24"}
           />
           <Button sx={{ flexGrow: 1 }} onClick={handleOk}>
