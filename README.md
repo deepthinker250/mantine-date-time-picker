@@ -2,7 +2,7 @@
 
 [Mantine UI](https://mantine.dev) Datetime picker component.
 
-##[Live Demo](https://mantine-datetime-picker.surge.sh)
+## [Live Demo](https://mantine-datetime-picker.surge.sh)
 
 ## Installation
 
