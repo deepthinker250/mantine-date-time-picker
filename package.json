@@ -1,7 +1,19 @@
 {
-	"name": "mantine-date-time-picker",
-	"version": "0.7.0",
+	"name": "mantine-datetime-picker",
+	"description": "Mantine UI Datetime Picker component.",
+	"version": "1.1.0",
 	"private": false,
+	"license": "MIT",
+	"homepage": "https://mantine-datetime-picker.surge.sh",
+	"repository": {
+		"url": "https://github.com/adam5909099/mantine-date-time-picker",
+		"type": "git"
+	},
+	"keywords": [
+		"mantine-ui",
+		"mantine",
+		"datetime-picker"
+	],
 	"main": "dist/cjs/index.js",
 	"module": "dist/esm/index.js",
 	"files": [

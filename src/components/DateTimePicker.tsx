@@ -40,9 +40,6 @@ export interface DateTimePickerProps
   /** Default value for uncontrolled input */
   defaultValue?: Date | null;
 
-  /** Set to false to force dropdown to stay open after date was selected */
-  closeCalendarOnChange?: boolean;
-
   /** Set to true to open dropdown on clear */
   openDropdownOnClear?: boolean;
 
@@ -69,12 +66,14 @@ export interface DateTimePickerProps
 
   /** Hide now button so that it doesn't interfear with min or max date */
   hideNow?: boolean;
+
+  /** Hide now button when date is disabled */
+  autoHideNow?: boolean;
 }
 
 const defaultProps: Partial<DateTimePickerProps> = {
   shadow: "sm",
   transitionDuration: 200,
-  closeCalendarOnChange: false,
   labelFormat: "MMMM YYYY",
   initiallyOpened: false,
   name: "date",
@@ -87,6 +86,8 @@ const defaultProps: Partial<DateTimePickerProps> = {
   withinPortal: false,
   firstDayOfWeek: "monday",
   openDropdownOnClear: false,
+  hideNow: false,
+  autoHideNow: true,
 };
 
 export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
@@ -104,7 +105,6 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
       transitionTimingFunction,
       nextMonthLabel,
       previousMonthLabel,
-      closeCalendarOnChange,
       labelFormat,
       dayClassName,
       dayStyle,
@@ -146,6 +146,7 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
       previousDecadeLabel,
       previousYearLabel,
       hideNow,
+      autoHideNow,
       ...others
     } = useComponentDefaultProps("DatePicker", defaultProps, props);
 
@@ -172,6 +173,7 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
         ? upperFirst(dayjs(_value).locale(finalLocale).format(dateFormat))
         : ""
     );
+    const [_hideNow, setHideNow] = useState(hideNow);
 
     const closeDropdown = () => {
       setDropdownOpened(false);
@@ -200,7 +202,6 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
       setInputState(
         upperFirst(dayjs(date).locale(finalLocale).format(dateFormat))
       );
-      closeCalendarOnChange && closeDropdown();
       window.setTimeout(() => inputRef.current?.focus(), 0);
     };
 
@@ -305,6 +306,19 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
       return dateAndTime.$d;
     };
 
+    useEffect(() => {
+      if (hideNow || !autoHideNow) return;
+
+      if (
+        (minDate && dayjs(new Date()).isBefore(minDate)) ||
+        (maxDate && dayjs(new Date()).isAfter(maxDate))
+      ) {
+        setHideNow(true);
+      } else {
+        setHideNow(false);
+      }
+    }, [hideNow, autoHideNow, minDate, maxDate]);
+
     return (
       <DatePickerBase
         allowFreeInput={allowFreeInput}
@@ -377,9 +391,8 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
           previousDecadeLabel={previousDecadeLabel}
           previousYearLabel={previousYearLabel}
         />
-
         <Group align="center" spacing="xs">
-          {!hideNow && (
+          {!_hideNow && (
             <Button sx={{ flexGrow: 1 }} variant="light" onClick={handleNow}>
               Now
             </Button>
