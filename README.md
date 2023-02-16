@@ -14,6 +14,14 @@ yarn add mantine-datetime-picker
 npm install mantine-datetime-picker
 ```
 
+#### PeerDependencies (Packages required or installed seperately)
+1. @mantine/core
+2. @mantine/dates
+3. @mantine/hooks
+4. @tabler/icons-react
+5. dayjs
+6. @emotion/react
+
 ### Props
 1. It take all [DatePicker Props](https://mantine.dev/dates/date-picker/?t=props)
 

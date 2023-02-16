@@ -15,7 +15,7 @@ import {
 } from "@mantine/dates";
 import { CalendarSharedProps } from "@mantine/dates/lib/components/CalendarBase/CalendarBase";
 import { FirstDayOfWeek } from "@mantine/dates/lib/types";
-import { IconClock } from "@tabler/icons";
+import { IconClock } from "@tabler/icons-react";
 
 export interface DateTimePickerProps
   extends Omit<DatePickerBaseSharedProps, "onChange">,
