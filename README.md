@@ -29,6 +29,8 @@ npm install mantine-datetime-picker
 |-------------|---------|-----------------------------------------------|---------|
 | hideNow     | boolean | Hide the `now` date&time button.       | false   |
 | autoHideNow | boolean | Auto hide `now` button based on minDate and maxDate. `hideNow` will override this prop. | true    |
+| nowLabel | string | Label for `Now` button | Now   |
+| okLabel | string | Label for `Ok` button | Ok    |
 
 ## License
 

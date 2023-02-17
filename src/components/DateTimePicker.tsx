@@ -69,6 +69,12 @@ export interface DateTimePickerProps
 
   /** Hide now button when date is disabled */
   autoHideNow?: boolean;
+
+  /**Label for now button */
+  nowLabel?: string;
+
+  /**lable for ok button */
+  okLabel?: string;
 }
 
 const defaultProps: Partial<DateTimePickerProps> = {
@@ -88,6 +94,8 @@ const defaultProps: Partial<DateTimePickerProps> = {
   openDropdownOnClear: false,
   hideNow: false,
   autoHideNow: true,
+  nowLabel: "Now",
+  okLabel: "Ok",
 };
 
 export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
@@ -147,6 +155,8 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
       previousYearLabel,
       hideNow,
       autoHideNow,
+      nowLabel,
+      okLabel,
       ...others
     } = useComponentDefaultProps("DatePicker", defaultProps, props);
 
@@ -352,6 +362,7 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
         {...others}
       >
         <Calendar
+          style={{ justifyContent: "center", maxWidth: "unset" }}
           classNames={classNames}
           styles={styles}
           locale={finalLocale}
@@ -394,7 +405,7 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
         <Group align="center" mt={12} spacing="xs">
           {!_hideNow && (
             <Button sx={{ flexGrow: 1 }} variant="light" onClick={handleNow}>
-              Now
+              {nowLabel}
             </Button>
           )}
           <TimeInput
@@ -408,7 +419,7 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
             format={dateFormat.match(/ a$/i) ? "12" : "24"}
           />
           <Button sx={{ flexGrow: 1 }} onClick={handleOk}>
-            Ok
+            {okLabel}
           </Button>
         </Group>
       </DatePickerBase>

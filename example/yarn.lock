@@ -574,10 +574,10 @@ magic-string@^0.27.0:
   dependencies:
     "@jridgewell/sourcemap-codec" "^1.4.13"
 
-mantine-datetime-picker@^1.1.5:
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/mantine-datetime-picker/-/mantine-datetime-picker-1.1.5.tgz#830b8a7ca45a5856a37de298c5bdfd47423d1d21"
-  integrity sha512-dsUSar6Fns9GTyodxESp5tzl1ohXvdBrycX5JWPSw5kk4s+lcZzI6nbqiNkGkAcIt9eY2Lzqvv9aYvTj6kt5wQ==
+mantine-datetime-picker@^1.1.7:
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/mantine-datetime-picker/-/mantine-datetime-picker-1.1.7.tgz#bf2bc18347db90308a8696109cb43a75efaa904a"
+  integrity sha512-LMBgmTbXEiHwAicCHzooZ9HiAVb8w90JcmHenmTMXV+swGCY2t/F+jUSAxm5qQtxi3XuE1OaoSRaEMTA7jTFJg==
 
 ms@2.1.2:
   version "2.1.2"

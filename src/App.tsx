@@ -8,13 +8,16 @@ function App() {
     <MantineProvider withGlobalStyles withNormalizeCSS>
       <Box p="md">
         <DateTimePicker
+          hideNow
+          nowLabel={"Right Now"}
+          okLabel={"Done Ok"}
           withAsterisk
           label="Date Time Picker"
           placeholder="Pick date time"
           defaultValue={new Date()}
           //autoHideNow={false}
-          minDate={dayjs(new Date()).subtract(6, "days").toDate()}
-          maxDate={dayjs(new Date()).add(6, "days").toDate()}
+          // minDate={dayjs(new Date()).subtract(6, 'days').toDate()}
+          // maxDate={dayjs(new Date()).add(6, 'days').toDate()}
         />
       </Box>
     </MantineProvider>
