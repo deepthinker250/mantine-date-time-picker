@@ -1,403 +1,306 @@
-import dayjs from "dayjs";
-import React, { useState, useRef, forwardRef, useEffect } from "react";
-import { useUncontrolled, useMergedRef, upperFirst } from "@mantine/hooks";
+import dayjs from 'dayjs';
+import { useRef, useState } from 'react';
 import {
-  Group,
-  Button,
-} from "@mantine/core";
-import {
-  Calendar,
-  DatePickerBaseProps,
-  DayOfWeek,
-  TimeInput,
-} from "@mantine/dates";
-import { IconClock } from "@tabler/icons-react";
+  ActionIcon,
+  ActionIconProps,
+  BoxProps,
+  CheckIcon,
+  factory,
+  Factory,
+  InputVariant,
+  StylesApiProps,
+  useProps,
+  useResolvedStylesApi,
+  useStyles,
+} from '@mantine/core';
+import { assignTime, CalendarBaseProps, CalendarSettings, CalendarStylesNames, DateInputSharedProps, DatePicker, DateValue, pickCalendarProps, PickerInputBase, PickerInputBaseStylesNames, shiftTimezone, TimeInput, TimeInputProps, useDatesContext } from '@mantine/dates';
+import { useDidUpdate, useDisclosure, useMergedRef } from '@mantine/hooks';
+import React from 'react';
 
-export interface DateTimePickerProps  extends Omit<DatePickerBaseProps, "onChange"> {
-  /** Selected date, required with controlled input */
-  value?: Date | null;
+export type DateTimePickerStylesNames =
+  | 'timeWrapper'
+  | 'timeInput'
+  | 'submitButton'
+  | PickerInputBaseStylesNames
+  | CalendarStylesNames;
 
-  /** Called when date changes */
-  onChange?(value: Date | null): void;
+export interface DateTimePickerProps
+  extends BoxProps,
+    Omit<
+      DateInputSharedProps,
+      'classNames' | 'styles' | 'closeOnChange' | 'size' | 'valueFormatter'
+    >,
+    Omit<CalendarBaseProps, 'defaultDate'>,
+    Omit<CalendarSettings, 'onYearMouseEnter' | 'onMonthMouseEnter'>,
+    StylesApiProps<DateTimePickerFactory> {
+  /** Dayjs format to display input value, "DD/MM/YYYY HH:mm" by default  */
+  valueFormat?: string;
 
-  /** Default value for uncontrolled input */
-  defaultValue?: Date | null;
+  /** Controlled component value */
+  value?: DateValue;
 
-  /** Set to true to open dropdown on clear */
-  openDropdownOnClear?: boolean;
+  /** Default value for uncontrolled component */
+  defaultValue?: DateValue;
 
-  /** dayjs input format */
-  inputFormat?: string;
+  /** Called when value changes */
+  onChange?: (value: DateValue) => void;
 
-  /** Control initial dropdown opened state */
-  initiallyOpened?: boolean;
+  /** TimeInput component props */
+  timeInputProps?: TimeInputProps & { ref?: React.ComponentPropsWithRef<'input'>['ref'] };
 
-  /** Parser function for date provided by input typing */
-  dateParser?: (value: string) => Date;
+  /** Props passed down to the submit button */
+  submitButtonProps?: ActionIconProps & React.ComponentPropsWithoutRef<'button'>;
 
-  /** Input name, useful for uncontrolled variant to capture data with native form */
-  name?: string;
-
-  /** Set first day of the week */
-  firstDayOfWeek?: DayOfWeek;
-
-  /** Allow free input */
-  allowFreeInput?: boolean;
-
-  /** Render day based on the date */
-  renderDay?(date: Date): React.ReactNode;
-
-  /** Hide now button so that it doesn't interfear with min or max date */
-  hideNow?: boolean;
-
-  /** Hide now button when date is disabled */
-  autoHideNow?: boolean;
-
-  /**Label for now button */
-  nowLabel?: string;
-
-  /**lable for ok button */
-  okLabel?: string;
+  /** Determines whether seconds input should be rendered */
+  withSeconds?: boolean;
 }
 
+export type DateTimePickerFactory = Factory<{
+  props: DateTimePickerProps;
+  ref: HTMLButtonElement;
+  stylesNames: DateTimePickerStylesNames;
+  variant: InputVariant;
+}>;
+
 const defaultProps: Partial<DateTimePickerProps> = {
-  initiallyOpened: false,
-  name: "date",
-  size: "sm",
-  firstDayOfWeek: 0,
-  openDropdownOnClear: false,
-  hideNow: false,
-  autoHideNow: true,
-  nowLabel: "Now",
-  okLabel: "Ok",
+  dropdownType: 'popover',
 };
 
-export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
-  (props: DateTimePickerProps, ref) => {
-    const {
-      value,
-      onChange,
-      defaultValue,
-      classNames,
-      styles,
-      shadow,
-      locale,
-      inputFormat,
-      transitionDuration,
-      transitionTimingFunction,
-      nextMonthLabel,
-      previousMonthLabel,
-      labelFormat,
-      dayClassName,
-      dayStyle,
-      disableOutsideEvents,
-      minDate,
-      maxDate,
-      excludeDate,
-      initialMonth,
-      initiallyOpened,
-      name,
-      size,
-      dropdownType,
-      dropdownPosition,
-      clearable,
-      disabled,
-      clearButtonLabel,
-      fixOnBlur,
-      allowFreeInput,
-      withinPortal,
-      dateParser,
-      firstDayOfWeek,
-      onFocus,
-      onBlur,
-      amountOfMonths,
-      allowLevelChange,
-      initialLevel,
-      onDropdownClose,
-      onDropdownOpen,
-      hideOutsideDates,
-      hideWeekdays,
-      renderDay,
-      type,
-      openDropdownOnClear,
-      unstyled,
-      weekendDays,
-      yearLabelFormat,
-      nextDecadeLabel,
-      nextYearLabel,
-      previousDecadeLabel,
-      previousYearLabel,
-      hideNow,
-      autoHideNow,
-      nowLabel,
-      okLabel,
-      ...others
-    } = {...props, ...defaultProps} as DateTimePickerProps;
+const classes: Record<string, string> = {
+  timeWrapper: `{
+    display: 'flex',
+    alignItems: 'stretch',
+    marginTop: 'var(--mantine-spacing-md)'
+  }`,
+  timeInput: `{
+    flex: 1,
+    marginInlineEnd: 'var(--mantine-spacing-md)'
+  }`
+}
 
-    const finalLocale = locale;
-    const dateFormat = inputFormat ?? "DD/MM/YYYY hh:mm a";
-    const [dropdownOpened, setDropdownOpened] = useState(initiallyOpened);
-    const calendarSize = size === "lg" || size === "xl" ? "md" : "sm";
-    const inputRef = useRef<HTMLInputElement | null>(null);
-    const [lastValidValue, setLastValidValue] = useState(defaultValue ?? null);
-    const [_value, setValue] = useUncontrolled<Date | null>({
-      value,
-      defaultValue,
-      finalValue: null,
-      onChange,
-    });
-    const [calendarMonth, setCalendarMonth] = useState(
-      _value || initialMonth || new Date()
-    );
+const DateTimePicker = factory<DateTimePickerFactory>((_props, ref) => {
+  const props = useProps('DateTimePicker', defaultProps, _props);
+  const {
+    value,
+    defaultValue,
+    onChange,
+    valueFormat,
+    locale,
+    classNames,
+    styles,
+    unstyled,
+    timeInputProps,
+    submitButtonProps,
+    withSeconds,
+    level,
+    defaultLevel,
+    size,
+    variant,
+    dropdownType,
+    vars,
+    minDate,
+    maxDate,
+    ...rest
+  } = props;
 
-    const [focused, setFocused] = useState(false);
-    const [inputState, setInputState] = useState(
-      _value instanceof Date
-        ? upperFirst(dayjs(_value).locale(finalLocale).format(dateFormat))
-        : ""
-    );
-    const [_hideNow, setHideNow] = useState(hideNow);
+  const getStyles = useStyles<DateTimePickerFactory>({
+    name: 'DateTimePicker',
+    classes,
+    props,
+    classNames,
+    styles,
+    unstyled,
+    vars,
+  });
 
-    const closeDropdown = () => {
-      setDropdownOpened(false);
-      onDropdownClose?.();
-    };
+  const { resolvedClassNames, resolvedStyles } = useResolvedStylesApi<DateTimePickerFactory>({
+    classNames,
+    styles,
+    props,
+  });
 
-    const openDropdown = () => {
-      setDropdownOpened(true);
-      onDropdownOpen?.();
-    };
+  const _valueFormat = valueFormat || (withSeconds ? 'DD/MM/YYYY HH:mm:ss' : 'DD/MM/YYYY HH:mm');
 
-    useEffect(() => {
-      if (value === null && !focused) {
-        setInputState("");
-      }
+  const timeInputRef = useRef<HTMLInputElement>();
+  const timeInputRefMerged = useMergedRef(timeInputRef, timeInputProps?.ref);
 
-      if (value instanceof Date && !focused) {
-        setInputState(
-          upperFirst(dayjs(value).locale(finalLocale).format(dateFormat))
-        );
-      }
-    }, [value, focused, finalLocale, dateFormat]);
+  const {
+    calendarProps: { allowSingleDateInRange, ...calendarProps },
+    others,
+  } = pickCalendarProps(rest);
 
-    const handleValueChange = (date: Date) => {
-      setValue(date);
-      setInputState(
-        upperFirst(dayjs(date).locale(finalLocale).format(dateFormat))
-      );
-      window.setTimeout(() => inputRef.current?.focus(), 0);
-    };
+  const ctx = useDatesContext();
+  const [_value, setValue] = useUncontrolledDates({
+    type: 'default',
+    value,
+    defaultValue,
+    onChange,
+  });
 
-    const handleClear = () => {
-      setValue(null);
-      setLastValidValue(null);
-      setInputState("");
-      openDropdownOnClear && openDropdown();
-      inputRef.current?.focus();
-    };
+  const formatTime = (dateValue: Date) =>
+    dateValue ? dayjs(dateValue).format(withSeconds ? 'HH:mm:ss' : 'HH:mm') : '';
 
-    const parseDate = (date: string) =>
-      dateParser
-        ? dateParser(date)
-        : dayjs(date, dateFormat, finalLocale).toDate();
+  const [timeValue, setTimeValue] = useState(formatTime(_value!));
+  const [currentLevel, setCurrentLevel] = useState(level || defaultLevel || 'month');
 
-    const setDateFromInput = () => {
-      let date = typeof _value === "string" ? parseDate(_value) : _value;
+  const [dropdownOpened, dropdownHandlers] = useDisclosure(false);
+  const formattedValue = _value
+    ? dayjs(_value).locale(ctx.getLocale(locale)).format(_valueFormat)
+    : '';
 
-      if (maxDate && dayjs(date).isAfter(maxDate)) {
-        date = maxDate;
-      }
+  const handleTimeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    timeInputProps?.onChange?.(event);
+    const val = event.currentTarget.value;
+    setTimeValue(val);
 
-      if (minDate && dayjs(date).isBefore(minDate)) {
-        date = minDate;
-      }
+    if (val) {
+      const [hours, minutes, seconds] = val.split(':').map(Number);
+      const timeDate = shiftTimezone('add', new Date(), ctx.getTimezone());
+      timeDate.setHours(hours);
+      timeDate.setMinutes(minutes);
+      timeDate.setSeconds(seconds || 0);
+      setValue(assignTime(timeDate, _value || shiftTimezone('add', new Date(), ctx.getTimezone())));
+    }
+  };
 
-      if (date && dayjs(date).isValid()) {
-        setValue(date);
-        setLastValidValue(date);
-        setInputState(
-          upperFirst(dayjs(date).locale(finalLocale).format(dateFormat))
-        );
-        setCalendarMonth(date);
-      } else if (fixOnBlur) {
-        setValue(lastValidValue);
-      }
-    };
+  const handleDateChange = (date: DateValue) => {
+    if (date) {
+      setValue(assignTime(_value, date));
+    }
+    timeInputRef.current?.focus();
+  };
 
-    const handleInputBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-      typeof onBlur === "function" && onBlur(event);
-      setFocused(false);
+  const handleTimeInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    timeInputProps?.onKeyDown?.(event);
 
-      if (allowFreeInput) {
-        setDateFromInput();
-      }
-    };
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      dropdownHandlers.close();
+    }
+  };
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Enter" && allowFreeInput) {
-        closeDropdown();
-        setDateFromInput();
-      }
-    };
+  useDidUpdate(() => {
+    if (!dropdownOpened) {
+      setTimeValue(formatTime(_value!));
+    }
+  }, [_value, dropdownOpened]);
 
-    const handleInputFocus = (event: React.FocusEvent<HTMLInputElement>) => {
-      typeof onFocus === "function" && onFocus(event);
-      setFocused(true);
-    };
+  useDidUpdate(() => {
+    if (dropdownOpened) {
+      setCurrentLevel('month');
+    }
+  }, [dropdownOpened]);
 
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      openDropdown();
+  const minTime = minDate ? dayjs(minDate).format('HH:mm:ss') : null;
+  const maxTime = maxDate ? dayjs(maxDate).format('HH:mm:ss') : null;
 
-      const date = parseDate(event.target.value);
-      if (dayjs(date).isValid()) {
-        setValue(date);
-        setLastValidValue(date);
-        setInputState(event.target.value);
-        setCalendarMonth(date);
-      } else {
-        setInputState(event.target.value);
-      }
-    };
+  const __stopPropagation = dropdownType === 'popover';
 
-    const handleNow = () => {
-      const now = new Date();
-      setValue(now);
-      setInputState(
-        upperFirst(dayjs(value).locale(finalLocale).format(dateFormat))
-      );
-      setDropdownOpened(false);
-      window.setTimeout(() => inputRef.current?.focus(), 0);
-      onChange?.(now);
-    };
-
-    const handleOk = () => {
-      setInputState(
-        upperFirst(dayjs(_value).locale(finalLocale).format(dateFormat))
-      );
-      setDropdownOpened(false);
-      window.setTimeout(() => inputRef.current?.focus(), 0);
-      onChange?.(_value);
-    };
-
-    const combineTimeAndDate = (time: Date, date: Date): Date => {
-      if (!(time instanceof Date)) return date;
-
-      const hour = dayjs(time).hour();
-      const minute = dayjs(time).minute();
-      const dateAndTime = dayjs(date).hour(hour).minute(minute);
-      //@ts-ignore
-      return dateAndTime.$d;
-    };
-
-    useEffect(() => {
-      if (hideNow || !autoHideNow) return;
-
-      if (
-        (minDate && dayjs(new Date()).isBefore(minDate)) ||
-        (maxDate && dayjs(new Date()).isAfter(maxDate))
-      ) {
-        setHideNow(true);
-      } else {
-        setHideNow(false);
-      }
-    }, [hideNow, autoHideNow, minDate, maxDate]);
-
-    return (
-      <DatePickerBase
-        allowFreeInput={allowFreeInput}
-        dropdownOpened={dropdownOpened ?? false}
-        setDropdownOpened={setDropdownOpened}
-        shadow={shadow}
-        transitionDuration={transitionDuration}
-        ref={useMergedRef(ref, inputRef)}
+  return (
+    <PickerInputBase
+      formattedValue={formattedValue}
+      dropdownOpened={dropdownOpened}
+      dropdownHandlers={dropdownHandlers}
+      classNames={resolvedClassNames}
+      styles={resolvedStyles}
+      unstyled={unstyled}
+      ref={ref}
+      onClear={() => setValue(null)}
+      shouldClear={!!_value}
+      value={_value}
+      size={size!}
+      variant={variant}
+      dropdownType={dropdownType}
+      {...others}
+      type="default"
+      __staticSelector="DateTimePicker"
+      // valueFormatter={valueFormatter}
+    >
+      <DatePicker
+        {...calendarProps}
+        maxDate={maxDate}
+        minDate={minDate}
         size={size}
-        styles={styles}
-        classNames={classNames}
-        onChange={handleChange}
-        onBlur={handleInputBlur}
-        onFocus={handleInputFocus}
-        onKeyDown={handleKeyDown}
-        name={name}
-        inputLabel={inputState}
-        __staticSelector="DatePicker"
-        dropdownType={dropdownType}
-        dropdownPosition={dropdownPosition}
-        clearable={type === "date" ? false : clearable && !!_value && !disabled}
-        clearButtonLabel={clearButtonLabel}
-        onClear={handleClear}
-        disabled={disabled}
-        withinPortal={withinPortal}
-        amountOfMonths={amountOfMonths}
-        onDropdownClose={onDropdownClose}
-        onDropdownOpen={onDropdownOpen}
-        type={type}
+        variant={variant}
+        type="default"
+        value={_value}
+        defaultDate={_value!}
+        onChange={handleDateChange}
+        locale={locale}
+        classNames={resolvedClassNames}
+        styles={resolvedStyles}
         unstyled={unstyled}
-        {...others}
-      >
-        <Calendar
-          style={{ justifyContent: "center", maxWidth: "unset" }}
-          classNames={classNames}
-          styles={styles}
-          locale={finalLocale}
-          nextMonthLabel={nextMonthLabel}
-          previousMonthLabel={previousMonthLabel}
-          month={allowFreeInput ? calendarMonth : undefined}
-          initialMonth={
-            initialMonth || (_value instanceof Date ? _value : new Date())
-          }
-          onMonthChange={setCalendarMonth}
-          value={_value instanceof Date ? _value : dayjs(_value).toDate()}
-          onChange={handleValueChange}
-          labelFormat={labelFormat}
-          dayClassName={dayClassName}
-          dayStyle={dayStyle}
-          disableOutsideEvents={disableOutsideEvents}
-          minDate={minDate}
-          maxDate={maxDate}
-          excludeDate={excludeDate}
-          __staticSelector="DatePicker"
-          fullWidth={dropdownType === "modal"}
-          __stopPropagation={dropdownType !== "modal"}
-          size={dropdownType === "modal" ? "lg" : calendarSize}
-          firstDayOfWeek={firstDayOfWeek}
-          preventFocus={allowFreeInput}
-          amountOfMonths={amountOfMonths}
-          allowLevelChange={allowLevelChange}
-          initialLevel={initialLevel}
-          hideOutsideDates={hideOutsideDates}
-          hideWeekdays={hideWeekdays}
-          renderDay={renderDay}
-          unstyled={unstyled}
-          weekendDays={weekendDays}
-          yearLabelFormat={yearLabelFormat}
-          nextDecadeLabel={nextDecadeLabel}
-          nextYearLabel={nextYearLabel}
-          previousDecadeLabel={previousDecadeLabel}
-          previousYearLabel={previousYearLabel}
-        />
-        <Group align="center" mt={12} spacing="xs">
-          {!_hideNow && (
-            <Button sx={{ flexGrow: 1 }} variant="light" onClick={handleNow}>
-              {nowLabel}
-            </Button>
-          )}
+        __staticSelector="DateTimePicker"
+        __stopPropagation={__stopPropagation}
+        level={level}
+        defaultLevel={defaultLevel}
+        onLevelChange={(_level) => {
+          setCurrentLevel(_level);
+          calendarProps.onLevelChange?.(_level);
+        }}
+        __timezoneApplied
+      />
+
+      {currentLevel === 'month' && (
+        <div {...getStyles('timeWrapper')}>
           <TimeInput
-            icon={<IconClock size={18} />}
-            sx={{ flexGrow: 1 }}
-            disabled={!_value}
-            value={_value}
-            onChange={(value) => {
-              setValue(combineTimeAndDate(value, _value!));
-            }}
-            format={dateFormat.match(/ a$/i) ? "12" : "24"}
+            value={timeValue}
+            withSeconds={withSeconds}
+            ref={timeInputRefMerged}
+            unstyled={unstyled}
+            minTime={
+              _value && minDate && _value.toDateString() === minDate.toDateString()
+                ? minTime != null
+                  ? minTime
+                  : undefined
+                : undefined
+            }
+            maxTime={
+              _value && maxDate && _value.toDateString() === maxDate.toDateString()
+                ? maxTime != null
+                  ? maxTime
+                  : undefined
+                : undefined
+            }
+            {...timeInputProps}
+            {...getStyles('timeInput', {
+              className: timeInputProps?.className,
+              style: timeInputProps?.style,
+            })}
+            onChange={handleTimeChange}
+            onKeyDown={handleTimeInputKeyDown}
+            size={size}
+            data-mantine-stop-propagation={__stopPropagation || undefined}
           />
-          <Button sx={{ flexGrow: 1 }} onClick={handleOk}>
-            {okLabel}
-          </Button>
-        </Group>
-      </DatePickerBase>
-    );
-  }
-);
+
+          <ActionIcon<'button'>
+            variant="default"
+            size={`input-${size || 'sm'}`}
+            {...getStyles('submitButton', {
+              className: submitButtonProps?.className,
+              style: submitButtonProps?.style,
+            })}
+            unstyled={unstyled}
+            data-mantine-stop-propagation={__stopPropagation || undefined}
+            // eslint-disable-next-line react/no-children-prop
+            children={<CheckIcon size="30%" />}
+            {...submitButtonProps}
+            onClick={(event) => {
+              submitButtonProps?.onClick?.(event);
+              dropdownHandlers.close();
+            }}
+          />
+        </div>
+      )}
+    </PickerInputBase>
+  );
+});
+
+DateTimePicker.classes = { ...classes, ...PickerInputBase.classes, ...DatePicker.classes };
+DateTimePicker.displayName = '@mantine/dates/DateTimePicker';
+
+function useUncontrolledDates(arg0: { type: string; value: DateValue | undefined; defaultValue: DateValue | undefined; onChange: ((value: DateValue) => void) | undefined; }): [any, any] {
+  throw new Error('Function not implemented.');
+}
 
 export default DateTimePicker;
