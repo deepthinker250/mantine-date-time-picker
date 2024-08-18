@@ -2,35 +2,18 @@ import dayjs from "dayjs";
 import React, { useState, useRef, forwardRef, useEffect } from "react";
 import { useUncontrolled, useMergedRef, upperFirst } from "@mantine/hooks";
 import {
-  useMantineTheme,
-  useComponentDefaultProps,
   Group,
   Button,
 } from "@mantine/core";
 import {
   Calendar,
-  DatePickerBase,
-  DatePickerBaseSharedProps,
+  DatePickerBaseProps,
+  DayOfWeek,
   TimeInput,
 } from "@mantine/dates";
-import { CalendarSharedProps } from "@mantine/dates/lib/components/CalendarBase/CalendarBase";
-import { FirstDayOfWeek } from "@mantine/dates/lib/types";
 import { IconClock } from "@tabler/icons-react";
 
-export interface DateTimePickerProps
-  extends Omit<DatePickerBaseSharedProps, "onChange">,
-    Omit<
-      CalendarSharedProps,
-      | "size"
-      | "classNames"
-      | "styles"
-      | "onMonthChange"
-      | "onChange"
-      | "isDateInRange"
-      | "isDateFirstInRange"
-      | "isDateLastInRange"
-      | "month"
-    > {
+export interface DateTimePickerProps  extends Omit<DatePickerBaseProps, "onChange"> {
   /** Selected date, required with controlled input */
   value?: Date | null;
 
@@ -56,7 +39,7 @@ export interface DateTimePickerProps
   name?: string;
 
   /** Set first day of the week */
-  firstDayOfWeek?: FirstDayOfWeek;
+  firstDayOfWeek?: DayOfWeek;
 
   /** Allow free input */
   allowFreeInput?: boolean;
@@ -78,19 +61,10 @@ export interface DateTimePickerProps
 }
 
 const defaultProps: Partial<DateTimePickerProps> = {
-  shadow: "sm",
-  transitionDuration: 200,
-  labelFormat: "MMMM YYYY",
   initiallyOpened: false,
   name: "date",
   size: "sm",
-  dropdownType: "popover",
-  dropdownPosition: "flip",
-  clearable: true,
-  disabled: false,
-  fixOnBlur: true,
-  withinPortal: false,
-  firstDayOfWeek: "monday",
+  firstDayOfWeek: 0,
   openDropdownOnClear: false,
   hideNow: false,
   autoHideNow: true,
@@ -158,10 +132,9 @@ export const DateTimePicker = forwardRef<HTMLInputElement, DateTimePickerProps>(
       nowLabel,
       okLabel,
       ...others
-    } = useComponentDefaultProps("DatePicker", defaultProps, props);
+    } = {...props, ...defaultProps} as DateTimePickerProps;
 
-    const theme = useMantineTheme();
-    const finalLocale = locale || theme.datesLocale;
+    const finalLocale = locale;
     const dateFormat = inputFormat ?? "DD/MM/YYYY hh:mm a";
     const [dropdownOpened, setDropdownOpened] = useState(initiallyOpened);
     const calendarSize = size === "lg" || size === "xl" ? "md" : "sm";
