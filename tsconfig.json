@@ -25,6 +25,7 @@
     "sourceMap": true,
     "jsx": "react",
     "declaration": true,
+    "plugins": [{ "name": "typescript-plugin-css-modules" }],
     "typeRoots": [
       "index.d.ts",
       "node_modules/@types"

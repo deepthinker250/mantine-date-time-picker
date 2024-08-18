@@ -67,17 +67,7 @@ const defaultProps: Partial<DateTimePickerProps> = {
   dropdownType: 'popover',
 };
 
-const classes: Record<string, string> = {
-  timeWrapper: `{
-    display: 'flex',
-    alignItems: 'stretch',
-    marginTop: 'var(--mantine-spacing-md)'
-  }`,
-  timeInput: `{
-    flex: 1,
-    marginInlineEnd: 'var(--mantine-spacing-md)'
-  }`
-}
+const classes: Record<string, string> = {}
 
 const DateTimePicker = factory<DateTimePickerFactory>((_props, ref) => {
   const props = useProps('DateTimePicker', defaultProps, _props);

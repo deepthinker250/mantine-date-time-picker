@@ -2,6 +2,7 @@ import React from "react";
 import { Box, MantineProvider } from "@mantine/core";
 import DateTimePicker from "./components/DateTimePicker";
 import { DatesProvider } from "@mantine/dates";
+import '@mantine/core/styles.css';
 
 function App() {
   return (
