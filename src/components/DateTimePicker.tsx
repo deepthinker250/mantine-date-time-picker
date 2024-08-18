@@ -16,6 +16,7 @@ import {
 import { assignTime, CalendarBaseProps, CalendarSettings, CalendarStylesNames, DateInputSharedProps, DatePicker, DateValue, pickCalendarProps, PickerInputBase, PickerInputBaseStylesNames, shiftTimezone, TimeInput, TimeInputProps, useDatesContext } from '@mantine/dates';
 import { useDidUpdate, useDisclosure, useMergedRef } from '@mantine/hooks';
 import React from 'react';
+import { useUncontrolledDates } from './useControlledDates';
 
 export type DateTimePickerStylesNames =
   | 'timeWrapper'
@@ -298,9 +299,5 @@ const DateTimePicker = factory<DateTimePickerFactory>((_props, ref) => {
 
 DateTimePicker.classes = { ...classes, ...PickerInputBase.classes, ...DatePicker.classes };
 DateTimePicker.displayName = '@mantine/dates/DateTimePicker';
-
-function useUncontrolledDates(arg0: { type: string; value: DateValue | undefined; defaultValue: DateValue | undefined; onChange: ((value: DateValue) => void) | undefined; }): [any, any] {
-  throw new Error('Function not implemented.');
-}
 
 export default DateTimePicker;

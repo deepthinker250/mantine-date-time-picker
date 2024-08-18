@@ -1,25 +1,20 @@
 import React from "react";
 import { Box, MantineProvider } from "@mantine/core";
 import DateTimePicker from "./components/DateTimePicker";
-import dayjs from "dayjs";
+import { DatesProvider } from "@mantine/dates";
 
 function App() {
   return (
-    <MantineProvider withGlobalStyles withNormalizeCSS>
-      <Box p="md">
-        <DateTimePicker
-          hideNow
-          nowLabel={"Right Now"}
-          okLabel={"Done Ok"}
-          withAsterisk
-          label="Date Time Picker"
-          placeholder="Pick date time"
-          defaultValue={new Date()}
-          //autoHideNow={false}
-          // minDate={dayjs(new Date()).subtract(6, 'days').toDate()}
-          // maxDate={dayjs(new Date()).add(6, 'days').toDate()}
-        />
-      </Box>
+    <MantineProvider>
+      <DatesProvider settings={{ locale: 'ru', firstDayOfWeek: 0, weekendDays: [0], timezone: 'UTC' }}>
+        <Box p="md">
+          <DateTimePicker
+            label="Date Time Picker"
+            placeholder="Pick date time"
+            defaultValue={new Date()}
+          />
+        </Box>
+      </DatesProvider>
     </MantineProvider>
   );
 }
